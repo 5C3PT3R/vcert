@@ -115,8 +115,8 @@
 
 <body>
     <h1>Acknowledgement</h1>
-    <p>We would like to express our gratitude to everyone who contributed to the development of this project. Below are
-        the details of the technologies used and the team members who made this possible:</p>
+    <p>We would like to express our gratitude to everyone who contributed to the development of this
+        project. Below are the details of the technologies used and the team members who made this possible:</p>
 
     <h2>Technologies Used</h2>
     <ul>
@@ -151,6 +151,16 @@
             });
         }
 
+        // Add fallback for shorter hashes by appending random letters
+        function generateRandomLetters(length) {
+            const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
+        }
+
         // Add hover effect to headers and list items with animated hash conversion and manage intervals
         const intervalStack = []; // Stack to store all interval IDs
 
@@ -165,6 +175,12 @@
                         const hashArray = hash.split('');
                         const originalArray = originalText.split('');
 
+                        // Ensure hash length matches original text length
+                        if (hashArray.length < originalArray.length) {
+                            const randomLetters = generateRandomLetters(originalArray.length - hashArray.length);
+                            hashArray.push(...randomLetters.split(''));
+                        }
+
                         let animationFrame = 0;
                         const animationInterval = setInterval(() => {
                             if (animationFrame < hashArray.length) {
@@ -177,7 +193,7 @@
                                 clearInterval(animationInterval);
                                 intervalStack.pop(); // Remove completed interval from stack
                             }
-                        }, 25); // Adjust speed of animation
+                        }, 10); // Adjust speed of animation
 
                         intervalStack.push(animationInterval); // Add interval ID to stack
 
