@@ -168,11 +168,15 @@ const authenticate = (req, res, next) => {
                 [serial, req.user.id]
             );
             const cert = result.rows[0];
+            console.log(cert);
 
             if (cert) {
                 const filePath = path.resolve(`uploads/${cert.hash}.pdf`);
                 if (fs.existsSync(filePath)) {
-                    res.download(filePath);
+                    res.json({
+                        hash: cert.hash,
+                        file: fs.readFileSync(filePath, { encoding: 'base64' })
+                    });
                 } else {
                     res.status(404).send("Certificate file not found on server");
                 }
@@ -206,6 +210,45 @@ const authenticate = (req, res, next) => {
             }
         } catch (err) {
             console.error("Error deleting certificate:", err);
+            res.status(500).send("Internal Server Error");
+        }
+    });
+
+    // Verify certificate route
+    app.get("/verify", async (req, res) => {
+        const { hash, username } = req.query;
+
+        if (!hash || !username) {
+            return res.status(400).send("Hash and username are required");
+        }
+
+        try {
+            let query = "";
+            let params = [];
+
+            if (hash.length === 64) { // Assuming SHA-256 hash length
+                query = "SELECT cert.serial, users.email, users.username FROM cert JOIN users ON cert.user_key = users.id WHERE cert.hash = $1 AND users.username = $2";
+                params = [hash, username];
+            } else {
+                query = "SELECT cert.serial, users.email, users.username FROM cert JOIN users ON cert.user_key = users.id WHERE cert.serial = $1 AND users.username = $2";
+                params = [hash.toUpperCase(), username];
+            }
+
+            const result = await client.query(query, params);
+
+            if (result.rows.length > 0) {
+                res.json({
+                    valid: true,
+                    details: result.rows[0]
+                });
+            } else {
+                res.json({
+                    valid: false,
+                    message: "No matching certificate found for the provided criteria"
+                });
+            }
+        } catch (err) {
+            console.error("Error verifying certificate:", err);
             res.status(500).send("Internal Server Error");
         }
     });

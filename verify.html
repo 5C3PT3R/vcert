@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Certificate</title>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .terminal {
+            background-color: #2d2d2d;
+            border-radius: 8px;
+            padding: 20px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .terminal h1 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .terminal form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .terminal label {
+            margin-bottom: 0.5rem;
+        }
+
+        .terminal input {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 1rem;
+            font-family: inherit;
+        }
+
+        .terminal button {
+            background-color: #007acc;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 10px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .terminal button:hover {
+            background-color: #005f99;
+        }
+
+        .response {
+            margin-top: 1rem;
+            white-space: pre-wrap;
+            background-color: #1e1e1e;
+            padding: 10px;
+            border: 1px solid #555;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="terminal">
+        <h1>Verify Certificate</h1>
+        <form id="verifyForm">
+            <label for="hash">Hash:</label>
+            <input type="text" id="hash" name="hash" required>
+
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+
+            <button type="submit">Verify</button>
+        </form>
+
+        <div id="response" class="response" style="display: none;"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('verifyForm');
+        const responseDiv = document.getElementById('response');
+        const api_url = 'http://localhost:3000';
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const hash = document.getElementById('hash').value;
+            const username = document.getElementById('username').value;
+
+            try {
+                const res = await fetch(`${api_url}/verify?hash=${encodeURIComponent(hash)}&username=${encodeURIComponent(username)}`);
+                const data = await res.json();
+
+                responseDiv.style.display = 'block';
+                responseDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseDiv.style.display = 'block';
+                responseDiv.textContent = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+
+</html>

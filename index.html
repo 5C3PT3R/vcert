@@ -11,6 +11,9 @@
     <style>
         html {
             background: url(./public/bg.svg) no-repeat center center fixed;
+            /* invert background colors */
+            -webkit-backdrop-filter: invert(100%);
+            backdrop-filter: invert(100%);
             background-size: cover;
             height: 100vh;
             display: flex;
@@ -35,6 +38,7 @@
             background: #1212125f;
             backdrop-filter: blur(10px);
             margin: auto;
+            transition: all 0.3s ease;
         }
 
         form {
@@ -129,6 +133,7 @@
             top: 0;
             left: 0;
             width: 100%;
+            overflow-x: hidden;
             background-color: rgba(0, 0, 0, 0.8);
             justify-content: center;
             align-items: center;
@@ -335,17 +340,37 @@
                         swal("Upload failed!", { icon: "error" });
                     }
                 });
-                function openModal(pdfUrl) {
+                function openModal(pdfUrl, hash) {
                     const modal = document.getElementById('modal');
                     const pdfViewer = document.getElementById('pdfViewer');
                     pdfViewer.src = pdfUrl;
+
+                    // Add hash display
+                    const hashDisplay = document.createElement('div');
+                    hashDisplay.id = 'hashDisplay';
+                    hashDisplay.textContent = `Hash: ${hash}`;
+                    hashDisplay.style.color = '#e0e0e0';
+                    hashDisplay.style.marginBottom = '10px';
+                    hashDisplay.style.textAlign = 'center';
+                    hashDisplay.style.fontFamily = 'monospace';
+
+                    const modalContent = modal.querySelector('.modal-content');
+                    modalContent.insertBefore(hashDisplay, modalContent.firstChild);
+
                     modal.style.display = 'flex';
                 }
+
                 function closeModal() {
                     const modal = document.getElementById('modal');
                     modal.style.display = 'none';
                     const pdfViewer = document.getElementById('pdfViewer');
                     pdfViewer.src = '';
+
+                    // Remove hash display
+                    const hashDisplay = document.getElementById('hashDisplay');
+                    if (hashDisplay) {
+                        hashDisplay.remove();
+                    }
                 }
                 async function loadCertificates() {
                     const response = await fetch(`${apiUrl}/certificates`, {
@@ -384,9 +409,9 @@
                                         headers: { 'Authorization': `Bearer ${getToken()}` }
                                     });
                                     if (response.ok) {
-                                        const blob = await response.blob();
-                                        const url = URL.createObjectURL(blob);
-                                        openModal(url);
+                                        const data = await response.json();
+                                        const pdfUrl = `data:application/pdf;base64,${data.file}`;
+                                        openModal(pdfUrl, data.hash);
                                     } else {
                                         swal("Failed to load certificate!", { icon: "error" });
                                     }
