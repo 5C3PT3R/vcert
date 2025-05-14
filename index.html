@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: auto;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        input,
+        button {
+            margin: 5px;
+            padding: 10px;
+        }
+
+        #certificates {
+            margin-top: 20px;
+        }
+
+        .certificate {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .certificate button {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1 style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 20px;">
+        Certificate Manager
+        <button id="logoutButton" style="margin-left: auto;">Logout</button>
+    </h1>
+
+    <div id="auth">
+        <h2>Login</h2>
+        <form id="loginForm">
+            <input type="text" id="identifier" placeholder="Email or Username" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+
+        <h2>Register</h2>
+        <form id="registerForm">
+            <input type="email" id="regEmail" placeholder="Email" required>
+            <input type="text" id="regUsername" placeholder="Username" required>
+            <input type="password" id="regPassword" placeholder="Password" required>
+            <button type="submit">Register</button>
+        </form>
+    </div>
+
+    <div id="app" style="display: none;">
+        <h2>Upload Certificates</h2>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="file" id="certificates" multiple required>
+            <button type="submit">Upload</button>
+        </form>
+
+        <h2>Your Certificates</h2>
+        <div id="my-certificates"></div>
+
+        <script>
+            const apiUrl = 'http://localhost:3000';
+
+            // Helper function to set token
+            function setToken(token) {
+                localStorage.setItem('token', token);
+            }
+
+            // Helper function to get token
+            function getToken() {
+                return localStorage.getItem('token');
+            }
+
+            // Show or hide sections based on login status
+            function updateUI() {
+                const token = getToken();
+                document.getElementById('auth').style.display = token ? 'none' : 'block';
+                document.getElementById('app').style.display = token ? 'block' : 'none';
+            }
+
+            // Login form submission
+            document.getElementById('loginForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const identifier = document.getElementById('identifier').value;
+                const password = document.getElementById('password').value;
+
+                const response = await fetch(`${apiUrl}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identifier, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setToken(data.token);
+                    updateUI();
+                    alert('Login successful!');
+                } else {
+                    alert('Login failed!');
+                }
+            });
+
+            // Register form submission
+            document.getElementById('registerForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('regEmail').value;
+                const username = document.getElementById('regUsername').value;
+                const password = document.getElementById('regPassword').value;
+
+                const response = await fetch(`${apiUrl}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, username, password })
+                });
+
+                if (response.ok) {
+                    alert('Registration successful!');
+                } else {
+                    alert('Registration failed!');
+                }
+            });
+
+            // Upload form submission
+            document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const fileInput = document.getElementById('certificates');
+                const formData = new FormData();
+                Array.from(fileInput.files).forEach(file => {
+                    formData.append('certificates', file);
+                });
+
+                const response = await fetch(`${apiUrl}/upload`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${getToken()}` },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    alert(`Certificates uploaded!`);
+                    loadCertificates();
+                } else {
+                    alert('Upload failed!');
+                }
+            });
+
+            async function loadCertificates() {
+                const response = await fetch(`${apiUrl}/certificates`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+
+                const container = document.getElementById('my-certificates');
+                container.innerHTML = ''; // Clear previous content
+
+                if (response.ok) {
+                    const certificates = await response.json();
+
+                    if (certificates.length === 0) {
+                        container.textContent = 'No certificates found.';
+                    } else {
+                        certificates.forEach(cert => {
+                            const certDiv = document.createElement('div');
+                            certDiv.className = 'certificate';
+                            certDiv.style.display = 'flex';
+                            certDiv.style.alignItems = 'center';
+                            certDiv.style.marginBottom = '10px';
+
+                            const serialText = document.createElement('span');
+                            serialText.textContent = cert.serial;
+                            serialText.style.marginRight = '10px';
+
+                            const viewButton = document.createElement('button');
+                            viewButton.textContent = 'view';
+                            viewButton.style.marginRight = '5px';
+                            viewButton.addEventListener('click', () => downloadCertificate(cert.serial));
+
+                            const deleteButton = document.createElement('button');
+                            deleteButton.textContent = 'delete';
+                            deleteButton.addEventListener('click', async () => {
+                                const confirmed = confirm('Are you sure you want to delete this certificate?');
+                                if (confirmed) {
+                                    const deleteResponse = await fetch(`${apiUrl}/delete?serial=${cert.serial}`, {
+                                        method: 'DELETE',
+                                        headers: { 'Authorization': `Bearer ${getToken()}` }
+                                    });
+
+                                    if (deleteResponse.ok) {
+                                        alert('Certificate deleted successfully!');
+                                        loadCertificates();
+                                    } else {
+                                        alert('Failed to delete certificate!');
+                                    }
+                                }
+                            });
+
+                            certDiv.appendChild(serialText);
+                            certDiv.appendChild(viewButton);
+                            certDiv.appendChild(deleteButton);
+                            container.appendChild(certDiv);
+                        });
+                    }
+                } else {
+                    container.textContent = 'Failed to load certificates!';
+                }
+            }
+
+            // Download certificate
+            async function downloadCertificate(serial) {
+                const response = await fetch(`${apiUrl}/retrieve?serial=${serial}`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${serial}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                } else {
+                    alert('Failed to download certificate!');
+                }
+            }
+
+            // Logout functionality
+            document.getElementById('logoutButton').addEventListener('click', () => {
+                localStorage.removeItem('token');
+                updateUI();
+                alert('Logged out successfully!');
+            });
+
+            // Initialize UI
+            updateUI();
+            if (getToken()) loadCertificates();
+        </script>
+    </div>
+</body>
+
+</html>
