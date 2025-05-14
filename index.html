@@ -5,27 +5,77 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Certificate Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script>
     <style>
+        html {
+            background: url(./public/bg.svg) no-repeat center center fixed;
+            background-size: cover;
+            height: 100vh;
+            display: flex;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 500px;
-            margin: auto;
-            padding: 0;
+            font-family: 'Roboto', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            background-color: #f4f4f4;
+            color: #e0e0e0;
+            width: 100%;
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 600px;
+            height: 550px;
+            border-radius: 25px;
+            /* blur background 10px */
+            background: #1212125f;
+            backdrop-filter: blur(10px);
+            margin: auto;
         }
 
         form {
             margin-bottom: 20px;
+            background: #1212125f;
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         input,
         button {
             margin: 5px;
+            padding: 10px;
+            border: none;
+            border-radius: 3px;
+            font-size: 1rem;
+            background: transparent;
+            backdrop-filter: blur(10px);
+        }
+
+        input {
+            color: #e0e0e0;
+            background: transparent;
+            backdrop-filter: blur(10px);
+        }
+
+        input::placeholder {
+            color: #888;
+        }
+
+        button {
+            background: #3a3a3a;
+            color: #e0e0e0;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #505050;
         }
 
         #certificates {
@@ -36,29 +86,41 @@
             margin-top: 20px;
             flex-direction: column;
             align-items: center;
-            height: 150px;
+            height: 200px;
             overflow-y: auto;
-            background-color: #eee;
-            padding: 20px;
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            background: #1212125f;
+            backdrop-filter: blur(10px);
         }
 
         .certificate {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-radius: 5px;
             max-width: 500px;
             width: 90%;
             margin: auto;
+            padding: 10px;
+            background: transparent;
+            color: #e0e0e0;
         }
 
-        /* all .certificates except last */
         .certificate:not(:last-child) {
-            border-bottom: 1px solid #ccc;
+            border-bottom: 1px solid black;
         }
 
         .certificate button {
             margin-left: 10px;
+            background: #3a3a3a;
+            color: #e0e0e0;
+            transition: background 0.3s;
+        }
+
+        .certificate button:hover {
+            background: #505050;
         }
 
         .modal {
@@ -67,19 +129,19 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.8);
             justify-content: center;
             align-items: center;
         }
 
         .modal-content {
-            background: #fff;
+            background: #1e1e1e;
             padding: 20px;
-            border-radius: 8px;
+            border-radius: 5px;
             max-width: 80%;
             max-height: 80%;
             overflow: auto;
+            color: #e0e0e0;
         }
 
         .modal iframe {
@@ -91,279 +153,336 @@
         .modal-close {
             margin-top: 10px;
             padding: 10px;
-            background: #f44336;
-            color: #fff;
+            background: #3a3a3a;
+            color: #e0e0e0;
             border: none;
-            border-radius: 5px;
+            border-radius: 3px;
             cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .modal-close:hover {
+            background: #505050;
+        }
+
+        .swal-modal {
+            background: #1212125f !important;
+            backdrop-filter: blur(10px);
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            color: #e0e0e0;
+            transform: scale(0.9) !important;
+            transition: transform 0.2s ease-in-out !important;
+        }
+
+        .swal-title {
+            color: #e0e0e0 !important;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .swal-text {
+            color: #e0e0e0 !important;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .swal-button {
+            background: #3a3a3a !important;
+            color: #e0e0e0 !important;
+            border-radius: 3px;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+
+        .swal-button:hover {
+            background: #505050 !important;
+        }
+
+        .swal-icon--success {
+            border-color: #4caf50 !important;
+        }
+
+        .swal-icon--success__ring {
+            border: 4px solid #4caf50 !important;
+            background-color: transparent !important;
+        }
+
+        .swal-icon--success__line {
+            background-color: #4caf50 !important;
+        }
+
+        .swal2-success-circular-line-right {
+            background-color: transparent !important;
+        }
+
+        .swal-icon--success__hide-corners {
+            background: none !important;
+        }
+
+        .swal-icon--success:before,
+        .swal-icon--success:after {
+            background: none !important;
         }
     </style>
 </head>
 
 <body>
-    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 20px;">
-        <h1>Certificate Manager</h1>
-        <span><button id="logoutButton" style="margin-left: auto;">Logout</button></span>
-    </div>
-
-    <div id="auth">
-        <h2>Login</h2>
-        <form id="loginForm">
-            <input type="text" id="identifier" placeholder="Email or Username" required>
-            <input type="password" id="password" placeholder="Password" required>
-            <button type="submit">Login</button>
-        </form>
-
-        <h2>Register</h2>
-        <form id="registerForm">
-            <input type="email" id="regEmail" placeholder="Email" required>
-            <input type="text" id="regUsername" placeholder="Username" required>
-            <input type="password" id="regPassword" placeholder="Password" required>
-            <button type="submit">Register</button>
-        </form>
-    </div>
-
-    <div id="app" style="display: none;">
-        <h2>Upload Certificates</h2>
-        <form id="uploadForm" enctype="multipart/form-data">
-            <input type="file" id="certificates" multiple required>
-            <button type="submit">Upload</button>
-        </form>
-
-        <h2>Your Certificates</h2>
-        <div id="my-certificates"></div>
-
-        <div id="modal" class="modal">
-            <div class="modal-content">
-                <iframe id="pdfViewer" src=""></iframe>
-                <button class="modal-close" onclick="closeModal()">Close</button>
-            </div>
+    <div class="container">
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 20px;">
+            <h1>VCert</h1>
+            <span><button id="logoutButton" style="margin-left: auto;"><i class="fas fa-sign-out-alt"></i>
+                    Logout</button></span>
         </div>
-
-        <script>
-            const apiUrl = 'http://localhost:3000';
-
-            // Helper function to set token
-            function setToken(token) {
-                localStorage.setItem('token', token);
-            }
-
-            // Helper function to get token
-            function getToken() {
-                return localStorage.getItem('token');
-            }
-
-            // Show or hide sections based on login status
-            function updateUI() {
-                const token = getToken();
-                document.getElementById('auth').style.display = token ? 'none' : 'block';
-                document.getElementById('app').style.display = token ? 'block' : 'none';
-            }
-
-            // Login form submission
-            document.getElementById('loginForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const identifier = document.getElementById('identifier').value;
-                const password = document.getElementById('password').value;
-
-                const response = await fetch(`${apiUrl}/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ identifier, password })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    setToken(data.token);
-                    updateUI();
-                    alert('Login successful!');
-                } else {
-                    alert('Login failed!');
+        <div id="auth">
+            <h2>Login</h2>
+            <form id="loginForm">
+                <input type="text" id="identifier" placeholder="Email or Username" required>
+                <input type="password" id="password" placeholder="Password" required>
+                <button type="submit"><i class="fas fa-sign-in-alt"></i> Login</button>
+            </form>
+            <h2>Register</h2>
+            <form id="registerForm">
+                <input type="email" id="regEmail" placeholder="Email" required>
+                <input type="text" id="regUsername" placeholder="Username" required>
+                <input type="password" id="regPassword" placeholder="Password" required>
+                <button type="submit"><i class="fas fa-user-plus"></i> Register</button>
+            </form>
+        </div>
+        <div id="app" style="display: none;">
+            <h2>Upload Certificates</h2>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <input type="file" id="certificates" multiple required>
+                <button type="submit"><i class="fas fa-upload"></i> Upload</button>
+            </form>
+            <h2>Your Certificates</h2>
+            <div id="my-certificates"></div>
+            <div id="modal" class="modal">
+                <div class="modal-content">
+                    <iframe id="pdfViewer" src=""></iframe>
+                    <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i> Close</button>
+                </div>
+            </div>
+            <script>
+                const apiUrl = 'http://localhost:3000';
+                // Helper function to set token
+                function setToken(token) {
+                    localStorage.setItem('token', token);
                 }
-                loadCertificates();
-                fetchUsername();
-            });
-
-            // Register form submission
-            document.getElementById('registerForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const email = document.getElementById('regEmail').value;
-                const username = document.getElementById('regUsername').value;
-                const password = document.getElementById('regPassword').value;
-
-                const response = await fetch(`${apiUrl}/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, username, password })
-                });
-
-                if (response.ok) {
-                    alert('Registration successful!');
-                } else {
-                    alert('Registration failed!');
+                // Helper function to get token
+                function getToken() {
+                    return localStorage.getItem('token');
                 }
-            });
-
-            // Upload form submission
-            document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const fileInput = document.getElementById('certificates');
-                const formData = new FormData();
-                Array.from(fileInput.files).forEach(file => {
-                    formData.append('certificates', file);
-                });
-
-                const response = await fetch(`${apiUrl}/upload`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${getToken()}` },
-                    body: formData
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    alert(`Certificates uploaded!`);
-                    loadCertificates();
-                } else {
-                    alert('Upload failed!');
+                // Show or hide sections based on login status
+                function updateUI() {
+                    const token = getToken();
+                    document.getElementById('auth').style.display = token ? 'none' : 'block';
+                    document.getElementById('app').style.display = token ? 'block' : 'none';
                 }
-            });
-
-            function openModal(pdfUrl) {
-                const modal = document.getElementById('modal');
-                const pdfViewer = document.getElementById('pdfViewer');
-                pdfViewer.src = pdfUrl;
-                modal.style.display = 'flex';
-            }
-
-            function closeModal() {
-                const modal = document.getElementById('modal');
-                modal.style.display = 'none';
-                const pdfViewer = document.getElementById('pdfViewer');
-                pdfViewer.src = '';
-            }
-
-            async function loadCertificates() {
-                const response = await fetch(`${apiUrl}/certificates`, {
-                    method: 'GET',
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
-                });
-
-                const container = document.getElementById('my-certificates');
-                container.innerHTML = ''; // Clear previous content
-
-                if (response.ok) {
-                    const certificates = await response.json();
-
-                    if (certificates.length === 0) {
-                        container.textContent = 'No certificates found.';
+                // Login form submission
+                document.getElementById('loginForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const identifier = document.getElementById('identifier').value;
+                    const password = document.getElementById('password').value;
+                    const response = await fetch(`${apiUrl}/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ identifier, password })
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        setToken(data.token);
+                        updateUI();
+                        swal("Login successful!", { icon: "success" });
                     } else {
-                        certificates.forEach(cert => {
-                            const certDiv = document.createElement('div');
-                            certDiv.className = 'certificate';
-                            certDiv.style.display = 'flex';
-                            certDiv.style.alignItems = 'center';
-                            certDiv.style.marginBottom = '10px';
-
-                            const serialText = document.createElement('span');
-                            serialText.textContent = cert.serial;
-                            serialText.style.marginRight = '10px';
-
-                            const buttonGroup = document.createElement('div');
-                            buttonGroup.style.display = 'flex';
-                            buttonGroup.style.gap = '5px';
-
-                            const viewText = document.createElement('span');
-                            viewText.textContent = '[view]';
-                            viewText.style.cursor = 'pointer';
-                            viewText.style.color = '#555'; // Minimalist color
-                            viewText.style.textDecoration = 'none';
-                            viewText.addEventListener('mouseover', () => viewText.style.textDecoration = 'underline');
-                            viewText.addEventListener('mouseout', () => viewText.style.textDecoration = 'none');
-                            viewText.addEventListener('click', async () => {
-                                const response = await fetch(`${apiUrl}/retrieve?serial=${cert.serial}`, {
-                                    method: 'GET',
-                                    headers: { 'Authorization': `Bearer ${getToken()}` }
-                                });
-
-                                if (response.ok) {
-                                    const blob = await response.blob();
-                                    const url = URL.createObjectURL(blob);
-                                    openModal(url);
-                                } else {
-                                    alert('Failed to load certificate!');
-                                }
-                            });
-
-                            const deleteText = document.createElement('span');
-                            deleteText.textContent = '[delete]';
-                            deleteText.style.cursor = 'pointer';
-                            deleteText.style.color = '#555'; // Minimalist color
-                            deleteText.style.textDecoration = 'none';
-                            deleteText.addEventListener('mouseover', () => deleteText.style.textDecoration = 'underline');
-                            deleteText.addEventListener('mouseout', () => deleteText.style.textDecoration = 'none');
-                            deleteText.addEventListener('click', async () => {
-                                const confirmed = confirm('Are you sure you want to delete this certificate?');
-                                if (confirmed) {
-                                    const deleteResponse = await fetch(`${apiUrl}/delete?serial=${cert.serial}`, {
-                                        method: 'DELETE',
+                        swal("Login failed!", { icon: "error" });
+                    }
+                    loadCertificates();
+                });
+                // Register form submission
+                document.getElementById('registerForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const email = document.getElementById('regEmail').value;
+                    const username = document.getElementById('regUsername').value;
+                    const password = document.getElementById('regPassword').value;
+                    const response = await fetch(`${apiUrl}/register`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, username, password })
+                    });
+                    if (response.ok) {
+                        swal("Registration successful!", { icon: "success" });
+                    } else {
+                        swal("Registration failed!", { icon: "error" });
+                    }
+                });
+                // Upload form submission
+                document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const fileInput = document.getElementById('certificates');
+                    const formData = new FormData();
+                    Array.from(fileInput.files).forEach(file => {
+                        formData.append('certificates', file);
+                    });
+                    const response = await fetch(`${apiUrl}/upload`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${getToken()}` },
+                        body: formData
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        swal("Certificates uploaded!", { icon: "success" });
+                        loadCertificates();
+                    } else {
+                        swal("Upload failed!", { icon: "error" });
+                    }
+                });
+                function openModal(pdfUrl) {
+                    const modal = document.getElementById('modal');
+                    const pdfViewer = document.getElementById('pdfViewer');
+                    pdfViewer.src = pdfUrl;
+                    modal.style.display = 'flex';
+                }
+                function closeModal() {
+                    const modal = document.getElementById('modal');
+                    modal.style.display = 'none';
+                    const pdfViewer = document.getElementById('pdfViewer');
+                    pdfViewer.src = '';
+                }
+                async function loadCertificates() {
+                    const response = await fetch(`${apiUrl}/certificates`, {
+                        method: 'GET',
+                        headers: { 'Authorization': `Bearer ${getToken()}` }
+                    });
+                    const container = document.getElementById('my-certificates');
+                    container.innerHTML = '';
+                    if (response.ok) {
+                        const certificates = await response.json();
+                        if (certificates.length === 0) {
+                            container.textContent = 'No certificates found.';
+                        } else {
+                            certificates.forEach(cert => {
+                                const certDiv = document.createElement('div');
+                                certDiv.className = 'certificate';
+                                certDiv.style.display = 'flex';
+                                certDiv.style.alignItems = 'center';
+                                certDiv.style.marginBottom = '10px';
+                                const serialText = document.createElement('span');
+                                serialText.textContent = cert.serial;
+                                serialText.style.marginRight = '10px';
+                                const buttonGroup = document.createElement('div');
+                                buttonGroup.style.display = 'flex';
+                                buttonGroup.style.gap = '5px';
+                                const viewText = document.createElement('span');
+                                viewText.textContent = '[view]';
+                                viewText.style.cursor = 'pointer';
+                                viewText.style.color = 'white';
+                                viewText.style.textDecoration = 'none';
+                                viewText.addEventListener('mouseover', () => viewText.style.textDecoration = 'underline');
+                                viewText.addEventListener('mouseout', () => viewText.style.textDecoration = 'none');
+                                viewText.addEventListener('click', async () => {
+                                    const response = await fetch(`${apiUrl}/retrieve?serial=${cert.serial}`, {
+                                        method: 'GET',
                                         headers: { 'Authorization': `Bearer ${getToken()}` }
                                     });
-
-                                    if (deleteResponse.ok) {
-                                        alert('Certificate deleted successfully!');
-                                        loadCertificates();
+                                    if (response.ok) {
+                                        const blob = await response.blob();
+                                        const url = URL.createObjectURL(blob);
+                                        openModal(url);
                                     } else {
-                                        alert('Failed to delete certificate!');
+                                        swal("Failed to load certificate!", { icon: "error" });
                                     }
-                                }
+                                });
+                                const deleteText = document.createElement('span');
+                                deleteText.textContent = '[delete]';
+                                deleteText.style.cursor = 'pointer';
+                                deleteText.style.color = 'white';
+                                deleteText.style.textDecoration = 'none';
+                                deleteText.addEventListener('mouseover', () => deleteText.style.textDecoration = 'underline');
+                                deleteText.addEventListener('mouseout', () => deleteText.style.textDecoration = 'none');
+                                deleteText.addEventListener('click', async () => {
+                                    swal({
+                                        title: "Are you sure?",
+                                        text: "You are about to delete this certificate!",
+                                        icon: "warning",
+                                        buttons: true,
+                                        dangerMode: true,
+                                    }).then(async (confirmed) => {
+                                        if (confirmed) {
+                                            const deleteResponse = await fetch(`${apiUrl}/delete?serial=${cert.serial}`, {
+                                                method: 'DELETE',
+                                                headers: { 'Authorization': `Bearer ${getToken()}` }
+                                            });
+                                            if (deleteResponse.ok) {
+                                                swal("Certificate deleted successfully!", { icon: "success" });
+                                                loadCertificates();
+                                            } else {
+                                                swal("Failed to delete certificate!", { icon: "error" });
+                                            }
+                                        }
+                                    });
+                                });
+                                buttonGroup.appendChild(viewText);
+                                buttonGroup.appendChild(deleteText);
+                                certDiv.appendChild(serialText);
+                                certDiv.appendChild(buttonGroup);
+                                container.appendChild(certDiv);
                             });
-
-                            buttonGroup.appendChild(viewText);
-                            buttonGroup.appendChild(deleteText);
-                            certDiv.appendChild(serialText);
-                            certDiv.appendChild(buttonGroup);
-                            container.appendChild(certDiv);
-                        });
+                        }
+                    } else {
+                        container.textContent = 'Failed to load certificates!';
                     }
-                } else {
-                    container.textContent = 'Failed to load certificates!';
                 }
-            }
+                async function fetchUsername() {
+                    const response = await fetch(`${apiUrl}/user`, {
+                        method: 'GET',
+                        headers: { 'Authorization': `Bearer ${getToken()}` }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        const usernameDisplay = document.createElement('span');
+                        usernameDisplay.textContent = `Welcome, ${data.username}`;
+                        usernameDisplay.style.marginRight = '10px';
+                        usernameDisplay.style.fontSize = 'small';
+                        const logoutButton = document.getElementById('logoutButton');
+                        logoutButton.parentNode.insertBefore(usernameDisplay, logoutButton);
+                    } else {
+                        console.error('Failed to fetch username');
+                    }
+                }
+                // Logout functionality
+                document.getElementById('logoutButton').addEventListener('click', () => {
+                    const token = getToken();
+                    if (!token) {
+                        swal("Login to logout", { icon: "info" });
+                        return;
+                    }
 
-            async function fetchUsername() {
-                const response = await fetch(`${apiUrl}/user`, {
-                    method: 'GET',
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                    swal({
+                        title: "Are you sure?",
+                        text: "You will be logged out!",
+                        icon: "warning",
+                        buttons: true,
+                        dangerMode: true,
+                    }).then((willLogout) => {
+                        if (willLogout) {
+                            localStorage.removeItem('token');
+                            updateUI();
+                            swal("Logged out successfully!", { icon: "success" });
+                        }
+                    });
                 });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    const usernameDisplay = document.createElement('span');
-                    usernameDisplay.textContent = `Welcome, ${data.username}`;
-                    usernameDisplay.style.marginRight = '10px';
-                    usernameDisplay.style.fontSize = 'small'; // Adjusted to small text size
-
-                    const logoutButton = document.getElementById('logoutButton');
-                    logoutButton.parentNode.insertBefore(usernameDisplay, logoutButton);
-                } else {
-                    console.error('Failed to fetch username');
-                }
-            }
-
-            // Logout functionality
-            document.getElementById('logoutButton').addEventListener('click', () => {
-                localStorage.removeItem('token');
+                // Initialize UI
                 updateUI();
-                alert('Logged out successfully!');
-            });
-
-            // Initialize UI
-            updateUI();
-            if (getToken()) {
-                loadCertificates();
-                fetchUsername();
-            }
-        </script>
+                if (getToken()) {
+                    loadCertificates();
+                    fetchUsername();
+                }
+            </script>
+        </div>
+    </div>
+    <div style="position: fixed; bottom: 0; left: 0; right: 0; padding: 10px; text-align: center;">
+        <a href="acknowledgement.html" style="color: #4caf50; text-decoration: none; font-size: 1rem;">
+            <i class="fas fa-info-circle"></i> Acknowledgement
+        </a>
     </div>
 </body>
 
