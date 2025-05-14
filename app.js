@@ -37,6 +37,28 @@ const secretKey = process.env.JWT_SECRET || "super_secret_key";
 
 app.use(express.json());
 
+// Middleware to prevent SQL injection
+const preventSQLInjection = (req, res, next) => {
+    const sqlInjectionPattern = /('|--|;|\b(ALTER|CREATE|DELETE|DROP|EXEC|INSERT|MERGE|SELECT|UPDATE|UNION|USE)\b)/i;
+
+    const checkObjectForInjection = (obj) => {
+        for (const key in obj) {
+            if (typeof obj[key] === 'string' && sqlInjectionPattern.test(obj[key])) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    if (checkObjectForInjection(req.body) || checkObjectForInjection(req.query) || checkObjectForInjection(req.params)) {
+        return res.status(400).send("Potential SQL injection detected");
+    }
+
+    next();
+};
+
+app.use(preventSQLInjection);
+
 // Middleware for authentication
 const authenticate = (req, res, next) => {
     const token = req.headers.authorization?.split(" ")[1];
@@ -228,9 +250,9 @@ const authenticate = (req, res, next) => {
 
             if (hash.length === 64) { // Assuming SHA-256 hash length
                 query = "SELECT cert.serial, users.email, users.username FROM cert JOIN users ON cert.user_key = users.id WHERE cert.hash = $1 AND users.username = $2";
-                params = [hash, username];
+                params = [hash.toLowerCase(), username];
             } else {
-                query = "SELECT cert.serial, users.email, users.username FROM cert JOIN users ON cert.user_key = users.id WHERE cert.serial = $1 AND users.username = $2";
+                query = "SELECT cert.hash, users.email, users.username FROM cert JOIN users ON cert.user_key = users.id WHERE cert.serial = $1 AND users.username = $2";
                 params = [hash.toUpperCase(), username];
             }
 
