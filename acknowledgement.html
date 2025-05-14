@@ -140,6 +140,77 @@
         style="position: fixed; bottom: 0; left: 0; right: 0; background: #121212; padding: 10px; text-align: center;">
         <a class="epic" href="index.html">view project</a>
     </footer>
+    <script>
+        // Function to hash a string
+        function hashString(input) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(input);
+            return crypto.subtle.digest('SHA-256', data).then(hashBuffer => {
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            });
+        }
+
+        // Add hover effect to headers and list items with animated hash conversion and manage intervals
+        const intervalStack = []; // Stack to store all interval IDs
+
+        function applyHoverEffect(elements) {
+            elements.forEach(item => {
+                let originalText = item.textContent; // Store original text
+                item.style.fontFamily = 'monospace'; // Set monospace font
+
+                item.addEventListener('mouseover', async () => {
+                    try {
+                        const hash = await hashString(originalText);
+                        const hashArray = hash.split('');
+                        const originalArray = originalText.split('');
+
+                        let animationFrame = 0;
+                        const animationInterval = setInterval(() => {
+                            if (animationFrame < hashArray.length) {
+                                const animatedText = originalArray.map((char, index) => {
+                                    return index <= animationFrame ? hashArray[index] : char;
+                                }).join('');
+                                item.textContent = animatedText;
+                                animationFrame++;
+                            } else {
+                                clearInterval(animationInterval);
+                                intervalStack.pop(); // Remove completed interval from stack
+                            }
+                        }, 25); // Adjust speed of animation
+
+                        intervalStack.push(animationInterval); // Add interval ID to stack
+
+                        item.style.transition = 'color 0.5s ease';
+                        item.style.color = '#4caf50';
+                    } catch (error) {
+                        console.error('Hashing failed:', error);
+                    }
+                });
+
+                item.addEventListener('mouseout', () => {
+                    while (intervalStack.length > 0) {
+                        clearInterval(intervalStack.pop()); // Clear all intervals
+                    }
+                    item.textContent = originalText; // Reset to original text
+                    item.style.color = ''; // Reset color
+                });
+            });
+        }
+
+        // Wrap each word of paragraphs in a span and apply hover effect
+        document.querySelectorAll('p').forEach(paragraph => {
+            const words = paragraph.textContent.split(' ');
+            paragraph.innerHTML = words.map(word => `<span>${word}</span>`).join(' ');
+        });
+
+        // Apply hover effect to spans inside paragraphs
+        applyHoverEffect(document.querySelectorAll('p span'));
+
+        // Apply hover effect to list items and headers
+        applyHoverEffect(document.querySelectorAll('ul li'));
+        applyHoverEffect(document.querySelectorAll('h1, h2'));
+    </script>
 </body>
 
 </html>
