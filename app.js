@@ -65,6 +65,21 @@ const authenticate = (req, res, next) => {
         }
     });
 
+    app.get("/user", authenticate, async (req, res) => {
+        try {
+            const result = await client.query("SELECT * FROM users WHERE id = $1", [req.user.id]);
+            const user = result.rows[0];
+            if (user) {
+                res.json({ email: user.email, username: user.username });
+            } else {
+                res.status(404).send("User not found");
+            }
+        } catch (err) {
+            console.error("Error fetching user:", err);
+            res.status(500).send("Internal Server Error");
+        }
+    });
+
     // Register route
     app.post("/register", async (req, res) => {
         const { email, username, password } = req.body;
@@ -146,9 +161,6 @@ const authenticate = (req, res, next) => {
     // Retrieve certificate route
     app.get("/retrieve", authenticate, async (req, res) => {
         const { serial } = req.query;
-        console.log("____________");
-        console.log(req.user);
-        console.log("____________");
 
         try {
             const result = await client.query(

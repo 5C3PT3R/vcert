@@ -26,7 +26,6 @@
         input,
         button {
             margin: 5px;
-            padding: 10px;
         }
 
         #certificates {
@@ -102,10 +101,10 @@
 </head>
 
 <body>
-    <h1 style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 20px;">
-        Certificate Manager
-        <button id="logoutButton" style="margin-left: auto;">Logout</button>
-    </h1>
+    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 20px;">
+        <h1>Certificate Manager</h1>
+        <span><button id="logoutButton" style="margin-left: auto;">Logout</button></span>
+    </div>
 
     <div id="auth">
         <h2>Login</h2>
@@ -182,6 +181,7 @@
                     alert('Login failed!');
                 }
                 loadCertificates();
+                fetchUsername();
             });
 
             // Register form submission
@@ -330,6 +330,26 @@
                 }
             }
 
+            async function fetchUsername() {
+                const response = await fetch(`${apiUrl}/user`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const usernameDisplay = document.createElement('span');
+                    usernameDisplay.textContent = `Welcome, ${data.username}`;
+                    usernameDisplay.style.marginRight = '10px';
+                    usernameDisplay.style.fontSize = 'small'; // Adjusted to small text size
+
+                    const logoutButton = document.getElementById('logoutButton');
+                    logoutButton.parentNode.insertBefore(usernameDisplay, logoutButton);
+                } else {
+                    console.error('Failed to fetch username');
+                }
+            }
+
             // Logout functionality
             document.getElementById('logoutButton').addEventListener('click', () => {
                 localStorage.removeItem('token');
@@ -339,7 +359,10 @@
 
             // Initialize UI
             updateUI();
-            if (getToken()) loadCertificates();
+            if (getToken()) {
+                loadCertificates();
+                fetchUsername();
+            }
         </script>
     </div>
 </body>
